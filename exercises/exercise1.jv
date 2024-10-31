@@ -34,4 +34,5 @@ pipeline AirportsPipeline {
         table: "airports";
         file: "./airports.sqlite";
     }
+
 }
