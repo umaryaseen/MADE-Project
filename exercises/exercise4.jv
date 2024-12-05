@@ -1,42 +1,48 @@
-pipeline BatteryTemperaturePipeline {
+pipeline BattryTemperaturePipeline {
 
-    DataExtractor
-        ->UnzipData
-        ->FilePicker
-        ->TextFileInterpreter
-        ->CSVReader
-        ->ColumnDeleter
-        ->RenameHeaders
-        ->TableInterpreter
-        ->TemperatureConverter
-        ->TableLoader;
+    DataFileExtractor
+        ->BatteryTemperatureZipArchiveInterpreter
+        ->BatteryTemperatureFilePicker
+        ->BatteryTemperatureTextFileInterpreter
+        ->BatteryTemperatureCSVInterpreter
+        ->BatteryTemperatureDataSelector
+        ->BatteryTemperatureColumnDeleter
+        ->BatteryTemperatureNameHeaderWriter
+        ->BatteryTemperatureTableInterpreter
+        ->TemperatureTransformer
+        ->BatteryTemperatureTransformer
+        ->BatteryTemperatureCellsLoader;
 
 
-    block DataExtractor oftype HttpExtractor {
+    block DataFileExtractor oftype HttpExtractor {
         url: "https://www.mowesta.com/data/measure/mowesta-dataset-20221107.zip";
     }
 
-    block UnzipData oftype ArchiveInterpreter {
+    block BatteryTemperatureZipArchiveInterpreter oftype ArchiveInterpreter {
         archiveType: "zip";
     }
 
-    block FilePicker oftype FilePicker {
+    block BatteryTemperatureFilePicker oftype FilePicker {
         path: "./data.csv";
     }
 
-    block TextFileInterpreter oftype TextFileInterpreter { }
+    block BatteryTemperatureTextFileInterpreter oftype TextFileInterpreter { }
 
-
-    block CSVReader oftype CSVInterpreter {
+    block BatteryTemperatureCSVInterpreter oftype CSVInterpreter {
         delimiter: ";";
     }
 
-    block ColumnDeleter oftype ColumnDeleter {
-        delete: [ column F, column G, column H, column I
+    block BatteryTemperatureDataSelector oftype CellRangeSelector {
+        select: range A1:J*;
+    }
+
+    block BatteryTemperatureColumnDeleter oftype ColumnDeleter {
+        delete: [
+             column F, column G, column H, column I
         ];
     }
 
-    block RenameHeaders oftype CellWriter {
+    block BatteryTemperatureNameHeaderWriter oftype CellWriter {
         at: range A1:F1;
         write: [
             "id",
@@ -48,21 +54,46 @@ pipeline BatteryTemperaturePipeline {
         ];
     }
 
-    block TableInterpreter oftype TableInterpreter {
+    constraint IdRegex oftype RangeConstraint {
+        lowerBound: 0;
+    }
+
+    valuetype id oftype integer {
+        constraints: [
+            IdRegex,
+        ];
+    }
+
+    block BatteryTemperatureTableInterpreter oftype TableInterpreter {
         header: true;
         columns: [
-            "id" oftype ID,
+            "id" oftype id,
             "producer" oftype text,
             "model" oftype text,
-            "month" oftype Month,
+            "month" oftype integer,
             "temperature" oftype decimal,
-            "battery_temperature" oftype decimal,
+            "battery_temperature" oftype decimal
         ];
+    }
+
+    transform CelsiusToFahrenheit {
+        from celsius oftype decimal;
+        to fahrenheit oftype decimal;
+
+        fahrenheit: (celsius * 9/5) + 32;
     }
 
 
 
-    block TemperatureConverter oftype TableTransformer {
+    block TemperatureTransformer oftype TableTransformer {
+        inputColumns: [
+            'temperature'
+        ];
+        outputColumn: 'temperature';
+        uses: CelsiusToFahrenheit;
+    }
+
+    block BatteryTemperatureTransformer oftype TableTransformer {
         inputColumns: [
             'battery_temperature'
         ];
@@ -70,33 +101,8 @@ pipeline BatteryTemperaturePipeline {
         uses: CelsiusToFahrenheit;
     }
 
-    block TableLoader oftype SQLiteLoader {
+    block BatteryTemperatureCellsLoader oftype SQLiteLoader {
         table: "temperatures";
-        file: "./temperatures1.sqlite";
+        file: "./temperatures.sqlite";
     }
-}
-
-
- transform CelsiusToFahrenheit {
-    from Celsius oftype decimal;
-    to Fahrenheit oftype decimal;
-
-    Fahrenheit: (Celsius * 9/5) + 32;
-}
-
-    constraint MonthConstraint on decimal: value >=1 and value <=12;
-
-constraint GeraetConstraint on integer: value >=0;
-
-   valuetype Month oftype integer {
-    constraints: [
-        MonthConstraint,
-    ];
-}         
-
-
-    valuetype ID oftype integer {
-    constraints: [
-        GeraetConstraint,
-    ];
 }
