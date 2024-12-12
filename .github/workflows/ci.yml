@@ -1,0 +1,45 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Checkout the repository
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    # Set up dependencies (if needed)
+    - name: Set up Python (if using Python tests)
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    # Cache dependencies
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    # Install dependencies
+    - name: Install dependencies
+      run: |
+        if [ -f requirements.txt ]; then
+          pip install -r requirements.txt
+        fi
+
+    # Run tests using tests.sh
+    - name: Run tests
+      run: |
+        chmod +x test.sh
+        ./project/test.sh
+      env:
+        TEST_SECRET: ${{ secrets.TEST_SECRET }}
