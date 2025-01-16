@@ -7,9 +7,9 @@ class TestProjectPipeline(unittest.TestCase):
     db_file_path = os.getcwd() + '/data/charging_station.db'
     expected_row_count = 50
     expected_columns = [
-        (0, 'state_name', 'VARCHAR(255)', 0, None, 0),
-        (1, 'count_of_ev_charging_stations', 'INT', 0, None, 0),
-        (2, 'count_of_ev_vehicles', 'INT', 0, None, 0)
+        (0, 'state_name', 'TEXT', 0, None, 0),
+        (1, 'count_of_ev_charging_stations', 'INTEGER', 0, None, 0),
+        (2, 'count_of_ev_vehicles', 'INTEGER', 0, None, 0)
     ]
     
     def test_db_file_exists(self):
