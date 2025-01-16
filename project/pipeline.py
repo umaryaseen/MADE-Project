@@ -267,7 +267,7 @@ def store_results_in_sqlite(station_counts_by_state, ev_pop_data):
     # Sort by state name for consistent insertion order
     sorted_data = dict(sorted(station_counts_by_state.items(), key=lambda x: x[0]))
     
-    connection = sqlite3.connect('charging_station.db')
+    connection = sqlite3.connect('./data/charging_station.db')
     cursor = connection.cursor()
 
     # Create table if not exists
