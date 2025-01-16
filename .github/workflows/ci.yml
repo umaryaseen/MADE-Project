@@ -39,7 +39,7 @@ jobs:
     # Run tests using tests.sh
     - name: Run tests
       run: |
-        chmod +x test.sh
+        chmod +x ./project/test.sh
         ./project/test.sh
       env:
         TEST_SECRET: ${{ secrets.TEST_SECRET }}
